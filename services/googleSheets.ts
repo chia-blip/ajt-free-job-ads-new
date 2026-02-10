@@ -29,16 +29,32 @@ export async function appendToSheet(data: SheetData): Promise<boolean> {
 
     if (!response.ok) {
       console.error('[v0] Failed to append to sheet. Status:', response.status, 'Body:', responseText);
-      alert(`Failed to submit to Google Sheets: ${responseText}`);
+      
+      let errorMessage = 'Unknown error';
+      try {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.error || errorData.message || responseText;
+      } catch {
+        errorMessage = responseText || `HTTP ${response.status}`;
+      }
+      
+      alert(`Failed to submit to Google Sheets:\n\nStatus: ${response.status}\nError: ${errorMessage}`);
       return false;
     }
 
     try {
       const result = JSON.parse(responseText);
       console.log('[v0] Successfully appended to sheet:', result);
+      
+      if (result.success === false) {
+        alert(`Google Sheets API returned error: ${result.error}`);
+        return false;
+      }
+      
       return true;
     } catch (parseError) {
       console.error('[v0] Error parsing response:', parseError);
+      alert(`Error parsing API response: ${parseError}`);
       return false;
     }
   } catch (error) {

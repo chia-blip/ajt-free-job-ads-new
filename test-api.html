@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #output {
+            background: #f5f5f5;
+            padding: 20px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Sheets API Test</h1>
+    
+    <button onclick="testAPI()">Test Google Sheets API</button>
+    <button onclick="testSimple()">Test Simple API</button>
+    
+    <div id="output">Click a button to test...</div>
+
+    <script>
+        async function testAPI() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing Google Sheets API...\n';
+            
+            try {
+                const testData = {
+                    timestamp: new Date().toISOString(),
+                    company_name: 'Test Company',
+                    email: 'test@example.com',
+                    phone_number: '+60123456789',
+                    hiring_status: 'hiring full time & intern',
+                    click_register_pop_up_after_submit: 'yes',
+                    click_login_pop_up_after_submit: 'no',
+                };
+                
+                output.textContent += 'Sending data: ' + JSON.stringify(testData, null, 2) + '\n\n';
+                
+                const response = await fetch('/api/google-sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData),
+                });
+                
+                output.textContent += 'Response status: ' + response.status + '\n';
+                output.textContent += 'Response ok: ' + response.ok + '\n\n';
+                
+                const responseText = await response.text();
+                output.textContent += 'Response body:\n' + responseText;
+                
+            } catch (error) {
+                output.textContent += '\nERROR: ' + error;
+            }
+        }
+        
+        async function testSimple() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing Simple API...\n';
+            
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                output.textContent += 'Response: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent += '\nERROR: ' + error;
+            }
+        }
+    </script>
+</body>
+</html>
