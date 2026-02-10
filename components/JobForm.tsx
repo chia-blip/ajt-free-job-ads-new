@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { JobFormData } from '../types';
+import { appendToSheet } from '../services/googleSheets';
 
 interface JobFormProps {
   onSuccess: () => void;
@@ -14,6 +15,8 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
     hiringPreference: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clickedRegister, setClickedRegister] = useState(false);
+  const [clickedLogin, setClickedLogin] = useState(false);
 
   const hiringOptions = [
     "Yes, I'm hiring interns & full timers",
@@ -26,13 +29,45 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.hiringPreference) {
       alert("Please select your hiring preference.");
       return;
     }
     setIsSubmitting(true);
+    
+    console.log('[v0] Submitting form data:', formData);
+    
+    // Map hiring preference to hiring_status format
+    let hiringStatus = '';
+    if (formData.hiringPreference === "Yes, I'm hiring interns & full timers") {
+      hiringStatus = 'hiring full time & intern';
+    } else if (formData.hiringPreference === "Only hiring interns") {
+      hiringStatus = 'only intern';
+    } else if (formData.hiringPreference === "I will hire full timers within 3 months") {
+      hiringStatus = 'will hire both in 3 months';
+    }
+    
+    // Send data to Google Sheets
+    const sheetData = {
+      timestamp: new Date().toISOString(),
+      company_name: formData.companyName,
+      email: formData.companyEmail,
+      phone_number: `+60${formData.whatsapp}`,
+      hiring_status: hiringStatus,
+      click_register: clickedRegister ? 'yes' : 'no',
+      click_login: clickedLogin ? 'yes' : 'no',
+    };
+    
+    const success = await appendToSheet(sheetData);
+    
+    if (success) {
+      console.log('[v0] Successfully submitted to Google Sheets');
+    } else {
+      console.log('[v0] Failed to submit to Google Sheets, but continuing...');
+    }
+    
     setTimeout(() => {
       setIsSubmitting(false);
       onSuccess();
@@ -42,6 +77,8 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
         whatsapp: '',
         hiringPreference: ''
       });
+      setClickedRegister(false);
+      setClickedLogin(false);
     }, 1500);
   };
 
@@ -155,6 +192,35 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
         >
           {isSubmitting ? 'Posting...' : 'Submit & Post for FREE'}
         </button>
+
+        {/* Register/Login Links */}
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-xs text-slate-400 font-medium">Already have an account?</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setClickedRegister(true);
+                console.log('[v0] Register button clicked');
+                window.open('https://employer.ajobthing.com/register', '_blank');
+              }}
+              className="px-5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all text-xs font-bold uppercase tracking-wide"
+            >
+              Register
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setClickedLogin(true);
+                console.log('[v0] Login button clicked');
+                window.open('https://employer.ajobthing.com/login', '_blank');
+              }}
+              className="px-5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all text-xs font-bold uppercase tracking-wide"
+            >
+              Login
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );
