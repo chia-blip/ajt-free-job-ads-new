@@ -10,6 +10,9 @@ export interface SheetData {
 
 export async function appendToSheet(data: SheetData): Promise<boolean> {
   try {
+    console.log('[v0] Calling API with data:', data);
+    console.log('[v0] API endpoint: /api/google-sheets');
+    
     const response = await fetch('/api/google-sheets', {
       method: 'POST',
       headers: {
@@ -18,16 +21,29 @@ export async function appendToSheet(data: SheetData): Promise<boolean> {
       body: JSON.stringify(data),
     });
 
+    console.log('[v0] Response status:', response.status);
+    console.log('[v0] Response ok:', response.ok);
+
+    const responseText = await response.text();
+    console.log('[v0] Response body:', responseText);
+
     if (!response.ok) {
-      console.error('[v0] Failed to append to sheet:', await response.text());
+      console.error('[v0] Failed to append to sheet. Status:', response.status, 'Body:', responseText);
+      alert(`Failed to submit to Google Sheets: ${responseText}`);
       return false;
     }
 
-    const result = await response.json();
-    console.log('[v0] Successfully appended to sheet:', result);
-    return true;
+    try {
+      const result = JSON.parse(responseText);
+      console.log('[v0] Successfully appended to sheet:', result);
+      return true;
+    } catch (parseError) {
+      console.error('[v0] Error parsing response:', parseError);
+      return false;
+    }
   } catch (error) {
     console.error('[v0] Error appending to sheet:', error);
+    alert(`Network error: ${error}`);
     return false;
   }
 }
