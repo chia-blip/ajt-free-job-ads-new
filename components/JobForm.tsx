@@ -56,8 +56,8 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
       email: formData.companyEmail,
       phone_number: `+60${formData.whatsapp}`,
       hiring_status: hiringStatus,
-      click_register: clickedRegister ? 'yes' : 'no',
-      click_login: clickedLogin ? 'yes' : 'no',
+      click_register_pop_up_after_submit: clickedRegister ? 'yes' : 'no',
+      click_login_pop_up_after_submit: clickedLogin ? 'yes' : 'no',
     };
     
     const success = await appendToSheet(sheetData);

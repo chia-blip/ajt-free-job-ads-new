@@ -4,8 +4,8 @@ export interface SheetData {
   email: string;
   phone_number: string;
   hiring_status: string;
-  click_register: string;
-  click_login: string;
+  click_register_pop_up_after_submit: string;
+  click_login_pop_up_after_submit: string;
 }
 
 export async function appendToSheet(data: SheetData): Promise<boolean> {
