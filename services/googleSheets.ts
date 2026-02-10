@@ -22,20 +22,42 @@ export async function appendToSheet(data: SheetData): Promise<boolean> {
     console.log('[v0] Calling Apps Script with data:', data);
     console.log('[v0] Apps Script URL:', APPS_SCRIPT_URL);
     
+    // Use redirect: 'follow' to handle Apps Script redirects
     const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', // Apps Script requires no-cors mode
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain', // Apps Script prefers text/plain for CORS
       },
       body: JSON.stringify(data),
+      redirect: 'follow',
     });
 
-    console.log('[v0] Response received (no-cors mode)');
+    console.log('[v0] Response status:', response.status);
+    console.log('[v0] Response ok:', response.ok);
     
-    // With no-cors mode, we can't read the response, but no error means success
-    console.log('[v0] Successfully sent to Google Sheets');
-    return true;
+    const responseText = await response.text();
+    console.log('[v0] Response text:', responseText);
+    
+    if (!response.ok) {
+      console.error('[v0] Failed to submit. Status:', response.status);
+      alert(`Failed to submit to Google Sheets:\nStatus: ${response.status}\nResponse: ${responseText}`);
+      return false;
+    }
+    
+    try {
+      const result = JSON.parse(responseText);
+      if (result.success === false) {
+        console.error('[v0] Apps Script returned error:', result.error);
+        alert(`Google Sheets error: ${result.error}`);
+        return false;
+      }
+      console.log('[v0] Successfully submitted to Google Sheets');
+      return true;
+    } catch (parseError) {
+      // If response isn't JSON, assume success
+      console.log('[v0] Non-JSON response, assuming success');
+      return true;
+    }
     
   } catch (error) {
     console.error('[v0] Error sending to Google Sheets:', error);
