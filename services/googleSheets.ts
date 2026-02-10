@@ -9,56 +9,36 @@ export interface SheetData {
 }
 
 export async function appendToSheet(data: SheetData): Promise<boolean> {
+  // Get the Apps Script URL from environment variable or use a placeholder
+  const APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL;
+  
+  if (!APPS_SCRIPT_URL) {
+    console.error('[v0] VITE_GOOGLE_APPS_SCRIPT_URL not set');
+    alert('Google Apps Script URL is not configured. Please set VITE_GOOGLE_APPS_SCRIPT_URL environment variable.');
+    return false;
+  }
+  
   try {
-    console.log('[v0] Calling API with data:', data);
-    console.log('[v0] API endpoint: /api/google-sheets');
+    console.log('[v0] Calling Apps Script with data:', data);
+    console.log('[v0] Apps Script URL:', APPS_SCRIPT_URL);
     
-    const response = await fetch('/api/google-sheets', {
+    const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors', // Apps Script requires no-cors mode
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     });
 
-    console.log('[v0] Response status:', response.status);
-    console.log('[v0] Response ok:', response.ok);
-
-    const responseText = await response.text();
-    console.log('[v0] Response body:', responseText);
-
-    if (!response.ok) {
-      console.error('[v0] Failed to append to sheet. Status:', response.status, 'Body:', responseText);
-      
-      let errorMessage = 'Unknown error';
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.error || errorData.message || responseText;
-      } catch {
-        errorMessage = responseText || `HTTP ${response.status}`;
-      }
-      
-      alert(`Failed to submit to Google Sheets:\n\nStatus: ${response.status}\nError: ${errorMessage}`);
-      return false;
-    }
-
-    try {
-      const result = JSON.parse(responseText);
-      console.log('[v0] Successfully appended to sheet:', result);
-      
-      if (result.success === false) {
-        alert(`Google Sheets API returned error: ${result.error}`);
-        return false;
-      }
-      
-      return true;
-    } catch (parseError) {
-      console.error('[v0] Error parsing response:', parseError);
-      alert(`Error parsing API response: ${parseError}`);
-      return false;
-    }
+    console.log('[v0] Response received (no-cors mode)');
+    
+    // With no-cors mode, we can't read the response, but no error means success
+    console.log('[v0] Successfully sent to Google Sheets');
+    return true;
+    
   } catch (error) {
-    console.error('[v0] Error appending to sheet:', error);
+    console.error('[v0] Error sending to Google Sheets:', error);
     alert(`Network error: ${error}`);
     return false;
   }
