@@ -60,11 +60,13 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
       click_login_pop_up_after_submit: clickedLogin ? 'yes' : 'no',
     };
     
-    console.log('[v0] Sending sheet data:', sheetData);
+    console.log('[v0] === FORM SUBMIT INITIATED ===');
+    console.log('[v0] Sheet data:', sheetData);
+    
     const success = await appendToSheet(sheetData);
     
     if (success) {
-      console.log('[v0] Successfully submitted to Google Sheets');
+      console.log('[v0] === FORM SUBMIT SUCCESS ===');
       setTimeout(() => {
         setIsSubmitting(false);
         onSuccess();
@@ -78,9 +80,9 @@ const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
         setClickedLogin(false);
       }, 1500);
     } else {
-      console.error('[v0] Failed to submit to Google Sheets');
+      console.error('[v0] === FORM SUBMIT FAILED ===');
+      console.error('[v0] See detailed error messages above');
       setIsSubmitting(false);
-      alert('Failed to submit to Google Sheets. Please check the console for details.');
     }
   };
 
