@@ -9,75 +9,50 @@ export interface SheetData {
 }
 
 export async function appendToSheet(data: SheetData): Promise<boolean> {
-  // Get the Apps Script URL from environment variable or use a placeholder
   const APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL;
+  
+  console.log('[v0] === Google Sheets Submission ===');
+  console.log('[v0] URL configured:', !!APPS_SCRIPT_URL);
   
   if (!APPS_SCRIPT_URL) {
     console.error('[v0] VITE_GOOGLE_APPS_SCRIPT_URL not set');
-    alert('Google Apps Script URL is not configured. Please set VITE_GOOGLE_APPS_SCRIPT_URL environment variable.');
+    alert('Apps Script URL not configured.\n\nFollow DEPLOYMENT_CHECKLIST.md to:\n1. Deploy Apps Script\n2. Add URL to environment variables');
     return false;
   }
   
-  console.log('[v0] Calling Apps Script with data:', data);
-  console.log('[v0] Apps Script URL:', APPS_SCRIPT_URL);
+  console.log('[v0] URL:', APPS_SCRIPT_URL);
+  console.log('[v0] Data:', JSON.stringify(data, null, 2));
   
   try {
-    // Apps Script web apps work best with form data or query params
-    // Create URL with query parameters as fallback method
-    const params = new URLSearchParams();
-    Object.keys(data).forEach(key => {
-      params.append(key, String(data[key as keyof SheetData]));
-    });
-    
     console.log('[v0] Sending request...');
     
-    // Try POST with form data
     const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', // Apps Script requires no-cors for POST
+      mode: 'no-cors', // Required for Apps Script
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: params.toString(),
+      body: JSON.stringify(data),
     });
-
-    console.log('[v0] Request sent (no-cors mode - cannot read response)');
     
-    // With no-cors, we can't check the response, but if no error was thrown, consider it successful
-    console.log('[v0] Assuming success - data sent to Google Sheets');
+    console.log('[v0] Response type:', response.type);
     
-    // Wait a bit to ensure the request completes
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // With no-cors, we get an opaque response
+    // If no error thrown, the request was sent successfully
+    if (response.type === 'opaque') {
+      console.log('[v0] ✓ Request sent (opaque response is normal)');
+      console.log('[v0] Check your Google Sheet to confirm data');
+      return true;
+    }
     
+    console.log('[v0] ✓ Request completed');
     return true;
     
   } catch (error) {
-    console.error('[v0] Network error:', error);
+    console.error('[v0] ✗ Error:', error);
+    console.error('[v0] Details:', error instanceof Error ? error.message : String(error));
     
-    // Try GET fallback with query params
-    console.log('[v0] Trying GET fallback method...');
-    try {
-      const params = new URLSearchParams();
-      Object.keys(data).forEach(key => {
-        params.append(key, String(data[key as keyof SheetData]));
-      });
-      
-      const getUrl = `${APPS_SCRIPT_URL}?${params.toString()}`;
-      console.log('[v0] GET URL:', getUrl);
-      
-      await fetch(getUrl, {
-        method: 'GET',
-        mode: 'no-cors',
-      });
-      
-      console.log('[v0] GET request sent successfully');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return true;
-      
-    } catch (fallbackError) {
-      console.error('[v0] Both POST and GET failed:', fallbackError);
-      alert(`Failed to submit to Google Sheets. Please check:\n1. Apps Script URL is correct\n2. Script is deployed as web app\n3. Access is set to "Anyone"`);
-      return false;
-    }
+    alert(`Failed to submit:\n${error instanceof Error ? error.message : String(error)}\n\nCheck:\n1. Apps Script URL is correct\n2. Apps Script is deployed\n3. Console for details`);
+    return false;
   }
 }
